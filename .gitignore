@@ -1,0 +1,6 @@
+node_modules/
+dist/
+.phpintel/
+*.log
+vendor/
+swagger-codegen-cli-2.2.1.jar
