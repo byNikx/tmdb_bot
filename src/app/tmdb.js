@@ -1,7 +1,8 @@
 let mongo = require('mongodb');
 let config = require('./config');
+let util = require('./util');
 
-module.exports = (function(mongo, url){
+module.exports = (function(mongo, config){
 
 	/**
 	 * [Buffer Class]
@@ -18,6 +19,13 @@ module.exports = (function(mongo, url){
 		this.getData = () => {
 			return data;
 		};
+
+		this.setType = (type) => {
+			this.type = type;
+		}
+		this.setData = (data) => {
+			this.data = data;
+		}
 		return this;
 	};
 
@@ -27,9 +35,9 @@ module.exports = (function(mongo, url){
 	 * [Connect]
 	 * @return {[Promise]} [description]
 	 */
-	let _connect = () => {
+	let _connect = (type) => {
 		let _promise = new Promise((resolve, reject)=>{
-			mongo.MongoClient.connect(url, function(err, db) {
+			mongo.MongoClient.connect(config.db[type].url, function(err, db) {
 				if(!err){
 					console.log("Connected to server.");
 					resolve(db);
@@ -69,7 +77,7 @@ module.exports = (function(mongo, url){
 
 		return new Promise((resolve, reject) => {
 			console.log('fetching...');
-			_connect().then((db)=>{
+			_connect('buffer').then((db)=>{
 				var cursor = db.collection('movies').find().limit(10);
 				let movies = [];
 				cursor.each(function(err, movie) {
@@ -88,4 +96,4 @@ module.exports = (function(mongo, url){
 	};	
 
 	return this;
-})(mongo, config.db.url);
+})(mongo, config);

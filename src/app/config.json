@@ -1,5 +1,10 @@
 {
 	"db": {
-		"url": "mongodb://localhost:27017/tmdb_buffer"
+		"buffer":{
+			"url": "mongodb://localhost:27017/tmdb_buffer"
+		},
+		"local": {
+			"url": "mongodb://localhost:27017/tmdb"
+		}
 	}
 }
