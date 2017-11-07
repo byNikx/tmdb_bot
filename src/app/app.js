@@ -1,5 +1,4 @@
 let tmdb = require('./tmdb');
-<<<<<<< HEAD
 let http = require("https");
 
 Promise.resolve()
