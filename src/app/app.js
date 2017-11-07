@@ -40,7 +40,7 @@ Promise.resolve()
 				"hostname": "api.themoviedb.org",
 				"port": null,
 				"path": "/3/movie/"+item.id+"?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1",
-				"headers": {} 
+				"headers": {}
 			};
 	  	let req = http.request(options, function (res) {
 		  let chunks = [];
