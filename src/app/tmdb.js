@@ -1,6 +1,8 @@
 let mongo = require('mongodb');
 let config = require('./config');
+let util = require('./util');
 
+<<<<<<< HEAD
 /**
  * [Buffer Class]
  * @param {[String]} type [description]
@@ -42,6 +44,34 @@ class Buffer{
 	// 	console.log("this._forUpdate", this._forUpdate);
 	// 	this._forUpdate.push(data);
 	// }
+=======
+module.exports = (function(mongo, config){
+
+	/**
+	 * [Buffer Class]
+	 * @param {[String]} type [description]
+	 * @param {[Array]} data [description]
+	 */
+	let Buffer = function(type, data){
+		this.type = type;
+		this.data = data;
+
+		this.getType = () => {
+			return type;
+		};
+		this.getData = () => {
+			return data;
+		};
+
+		this.setType = (type) => {
+			this.type = type;
+		}
+		this.setData = (data) => {
+			this.data = data;
+		}
+		return this;
+	};
+>>>>>>> 26c26337108100558623149995f1dd7948121c3f
 
 }
 
@@ -54,10 +84,14 @@ module.exports = (function(mongo, config){
 	 * [Connect]
 	 * @return {[Promise]} [description]
 	 */
+<<<<<<< HEAD
 	let _connect = (db) => {
 		let url = db === 'main' ? config.db.main_url: config.db.buffer_url
+=======
+	let _connect = (type) => {
+>>>>>>> 26c26337108100558623149995f1dd7948121c3f
 		let _promise = new Promise((resolve, reject)=>{
-			mongo.MongoClient.connect(url, function(err, db) {
+			mongo.MongoClient.connect(config.db[type].url, function(err, db) {
 				if(!err){
 //					console.log("Connected to server.");
 					resolve(db);
@@ -78,9 +112,15 @@ module.exports = (function(mongo, config){
 	this.getMovies = () => {
 
 		return new Promise((resolve, reject) => {
+<<<<<<< HEAD
 			console.log('fetching movies...');
 			_connect('buffer').then((db)=>{
 				let cursor = db.collection('movies').find({fetched: null}).sort({popularity: -1}).limit(40);
+=======
+			console.log('fetching...');
+			_connect('buffer').then((db)=>{
+				var cursor = db.collection('movies').find().limit(10);
+>>>>>>> 26c26337108100558623149995f1dd7948121c3f
 				let movies = [];
 				cursor.each(function(err, movie) {
 			      if (movie != null){

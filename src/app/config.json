@@ -1,6 +1,15 @@
 {
 	"db": {
+<<<<<<< HEAD
 		"buffer_url": "mongodb://localhost:27017/tmdb_buffer",
 		"main_url": "mongodb://localhost:27017/tmdb"
+=======
+		"buffer":{
+			"url": "mongodb://localhost:27017/tmdb_buffer"
+		},
+		"local": {
+			"url": "mongodb://localhost:27017/tmdb"
+		}
+>>>>>>> 26c26337108100558623149995f1dd7948121c3f
 	}
 }
