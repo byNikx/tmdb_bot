@@ -75,19 +75,19 @@ module.exports = (function(mongo, config){
 	 * [Get Movies]
 	 * @return {[Array]} [description]
 	 */
-	this.getMovies = () => {
+	this.getMedia = (type) => {
 
 		return new Promise((resolve, reject) => {
-			console.log('fetching movies...');
+			console.log('fetching', type, '...');
 			_connect('buffer').then((db)=>{
-				let cursor = db.collection('movies').find({fetched: null}).sort({popularity: -1}).limit(40);
-				let movies = [];
-				cursor.each(function(err, movie) {
-			      if (movie != null){
-			      	movies.push(movie);
+				let cursor = db.collection(type).find({fetched: null}).sort({popularity: -1}).limit(20);
+				let mediaData = [];
+				cursor.each(function(err, media) {
+			      if (mediaData && media){
+			      	mediaData.push(media);
 			      }else{
 			      	db.close();
-					resolve(movies);
+					resolve(mediaData);
 				  }
 	 		});
 			}).catch((error)=>{
@@ -100,12 +100,12 @@ module.exports = (function(mongo, config){
 	  * [Fill Buffer]
 	  * @return {[Promise]} [description]
 	  */
-	this.fillBuffer = () => {
+	this.fillBuffer = (type) => {
 		return new Promise((resolve, reject)=>{
-			this.getMovies().then((movies) => {
+			this.getMedia(type).then((response) => {
 					this.buffer = {
-						type: 'movies',
-						data: movies,
+						type: type,
+						data: response,
 						forUpdate: [],
 						fetched: []
 					};		
@@ -124,11 +124,11 @@ module.exports = (function(mongo, config){
 		// });
 	}
 
-	this.insertManyMovie = (movies) =>{
+	this.insertManyDocuments = (documents) =>{
 		return new Promise((resolve, reject)=>{
 			_connect('main').then((db)=>{
-				let cursor = db.collection('movies');
-				cursor.insertMany(movies).then(result => {
+				let cursor = db.collection(buffer.type);
+				cursor.insertMany(documents).then(result => {
 					db.close();
 					resolve(result);
 				});

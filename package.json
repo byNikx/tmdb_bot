@@ -9,6 +9,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mongodb": "^2.2.31"
+    "is-online": "^7.0.0",
+    "mongodb": "^2.2.31",
+    "shelljs": "^0.7.8"
   }
 }

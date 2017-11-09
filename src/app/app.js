@@ -1,92 +1,126 @@
-let tmdb = require('./tmdb');
-let http = require("https");
+const tmdb = require('./tmdb');
+const http = require("https");
+const isOnline = require('is-online');
 
-Promise.resolve()
-	.then(function() {
-	  console.log('Starting bot...');
-	  return ([]);
-	})
-	.then(function recursiveFunction(data){
-	  if(!data || data.length<=0){
+var target = process.argv[2];
 
-	  	if(tmdb.buffer.forUpdate && tmdb.buffer.forUpdate.length>0){
+if(!target){
+	console.log('please provide a target.');
+	process.exit();
+}
 
-	  		console.log('Inserting', tmdb.buffer.forUpdate.length, tmdb.buffer.type);
-	  		return tmdb.insertManyMovie(tmdb.buffer.forUpdate).then((data)=>{
-//	  			tmdb.buffer.insertCount += tmdb.buffer.forUpdate.length; 
-	  			tmdb.buffer.forUpdate = [];
-	  			console.log('updating buffer...');
-	  			return tmdb.updateBuffer(tmdb.buffer.fetched).then((data)=>{
-	  				tmdb.buffer.fetched = [];
-	  				console.log('updated!');
-//	  				console.log(tmdb.buffer.insertCount, 'documents inserted.');
-	  				return recursiveFunction(tmdb.buffer.data);
-	  			});		  		
+function getApiOptions(type, media){
+	
+	let apiOptions = {
+			method: 'GET',
+			hostname: 'api.themoviedb.org',
+			port: null,
+			headers: {} 
+	}
+	switch(type.toUpperCase()){
+		case 'MOVIES':
+			Object.assign(apiOptions, { path: '/3/movie/'+media.id+'?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1' });
+			break;
+		case 'TV_SERIES':
+			Object.assign(apiOptions, { path: '/3/tv/'+media.id+'?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1' });
+			break;
+		default:	
+			Object.assign(apiOptions, { path: '/3/movie/'+media.id+'?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1' });
+	}
+
+	return apiOptions;
+}
+
+(function app(target){
+	Promise.resolve()
+		.then(function() {
+		  console.log('starting bot...');
+		  console.log('checking connectivity...');
+		})
+		.then(function checkConnectivity(){
+			return isOnline().then(online => {
+				if(!online) {
+					console.log('no internet access.');
+					return checkConnectivity();
+				}
+			});
+		}).then(()=>{
+			console.log('internet access available.');
+			return ([]);
+		})
+		.then(function recursiveFunction(data){
+		  if(!data || data.length<=0){
+
+		  	if(tmdb.buffer.forUpdate && tmdb.buffer.forUpdate.length>0){
+
+		  		console.log('saving', tmdb.buffer.forUpdate.length, tmdb.buffer.type);
+		  		return tmdb.insertManyDocuments(tmdb.buffer.forUpdate).then((data)=>{
+		  			tmdb.buffer.forUpdate = [];
+		  			console.log('updating buffer...');
+		  			return tmdb.updateBuffer(tmdb.buffer.fetched).then((data)=>{
+		  				tmdb.buffer.fetched = [];
+		  				console.log('updated!');
+		  				return recursiveFunction(tmdb.buffer.data);
+		  			});		  		
+			  	});
+		  	}
+		  	console.log('filling buffer...');	  	
+		  	return tmdb.fillBuffer(target).then((data)=>{
+		  		return recursiveFunction(tmdb.buffer.data);
 		  	});
-	  	}
-	  	console.log('filling buffer...');	  	
-	  	return tmdb.fillBuffer().then((data)=>{
-	  		return recursiveFunction(tmdb.buffer.data);
-	  	});
-	  }
-	  let item = tmdb.buffer.data.shift();
-	  console.log('fetching', tmdb.buffer.type, item.original_title, item.popularity);
-	  
-	  let promise = new Promise((resolve, reject)=>{
+		  }
+		  let item = tmdb.buffer.data.shift();
+		  console.log('fetching', tmdb.buffer.type, item.original_title || item.original_name, item.popularity);
+		  
+		  let promise = new Promise((resolve, reject)=>{
 
-	  	let options = {
-				"method": "GET",
-				"hostname": "api.themoviedb.org",
-				"port": null,
-				"path": "/3/movie/"+item.id+"?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1",
-				"headers": {}
-			};
-	  	let req = http.request(options, function (res) {
-		  let chunks = [];
+		  	let options = getApiOptions(target,item);
 
-		  res.on("data", function (chunk) {
-		    chunks.push(chunk);
+		  	let req = http.request(options, function (res) {
+			  let chunks = [];
+
+			  res.on("data", function (chunk) {
+			    chunks.push(chunk);
+			  });
+
+			  res.on("end", function () {
+
+			    let body = Buffer.concat(chunks);
+			    if(tmdb.isJSON(body)){
+			    	if(!!body.status_code){
+			    	//if(body.status_code && body.status_code == 34){
+			    		console.log('Not found', body);
+			    	}else{
+				    	tmdb.buffer.forUpdate.push(JSON.parse(body.toString()));
+			            tmdb.buffer.fetched.push(item._id);
+			    	}
+			    }
+			    resolve();
+
+			  });
+
+			});
+
+			req.on('error', function (error){
+				console.log('failed');
+			  	reject();
+		    });
+
+			req.write("{}");
+			req.end();
+
+		  }).then(function(){
+		    return (recursiveFunction(tmdb.buffer.data));
 		  });
 
-		  res.on("end", function () {
+		  return (promise);
 
-		    let body = Buffer.concat(chunks);
-		    if(tmdb.isJSON(body)){
-		    	if(!!body.status_code){
-		    	//if(body.status_code && body.status_code == 34){
-		    		console.log('Not found', body);
-		    	}else{
-			    	tmdb.buffer.forUpdate.push(JSON.parse(body.toString()));// = item;
-		            tmdb.buffer.fetched.push(item._id);
-		    	}
-		    }
-		    resolve();
-		    // setTimeout(()=>{
-		    // 	resolve();
-		    // },1000);
-		  });
+		})
+		.then(function(){
+		  console.log('bot stopped');
+		}).catch(()=>{
+			console.log('bot stopped with error');
+			console.log('retrying...');
+			app(target);
 		});
-
-		req.write("{}");
-		req.end();
-
-
-
-
-
-
-	    // setTimeout(()=>{
-     //      tmdb.buffer.forUpdate.push(item);// = item;
-     //      tmdb.buffer.fetched.push(item._id);
-	    //   resolve();
-	    // }, 1000)
-	  }).then(function(){
-	    return (recursiveFunction(tmdb.buffer.data));
-	  });
-
-	  return (promise);
-
-	})
-	.then(function(){
-	  console.log('Bot stopped.');
-	});
+	})(target);
