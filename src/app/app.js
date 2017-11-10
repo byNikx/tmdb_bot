@@ -24,6 +24,12 @@ function getApiOptions(type, media){
 		case 'TV_SERIES':
 			Object.assign(apiOptions, { path: '/3/tv/'+media.id+'?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1' });
 			break;
+		case 'COLLECTIONS':
+			Object.assign(apiOptions, { path: '/3/collection/'+media.id+'?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1' });
+			break;
+		case 'PERSONS':
+			Object.assign(apiOptions, { path: '/3/person/'+media.id+'?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1' });
+			break;	
 		default:	
 			Object.assign(apiOptions, { path: '/3/movie/'+media.id+'?language=en-US&api_key=56fd94ed1618bd7235d227829acdfaa1' });
 	}
@@ -48,7 +54,9 @@ function getApiOptions(type, media){
 			console.log('internet access available.');
 			return ([]);
 		})
-		.then(function recursiveFunction(data){
+		.then(function recursiveFunction(data, attempt){
+  		  var attempt = isNaN(attempt) ? 0: attempt;
+		  if(attempt >=10) return 0;	
 		  if(!data || data.length<=0){
 
 		  	if(tmdb.buffer.forUpdate && tmdb.buffer.forUpdate.length>0){
@@ -66,11 +74,12 @@ function getApiOptions(type, media){
 		  	}
 		  	console.log('filling buffer...');	  	
 		  	return tmdb.fillBuffer(target).then((data)=>{
-		  		return recursiveFunction(tmdb.buffer.data);
+		  		if(data.length<=0) return recursiveFunction(tmdb.buffer.data, attempt+1);
+		  		else return recursiveFunction(tmdb.buffer.data, 0);
 		  	});
 		  }
 		  let item = tmdb.buffer.data.shift();
-		  console.log('fetching', tmdb.buffer.type, item.original_title || item.original_name, item.popularity);
+		  console.log('fetching', tmdb.buffer.type, item.original_title || item.original_name || item.name, item.popularity || '');
 		  
 		  let promise = new Promise((resolve, reject)=>{
 

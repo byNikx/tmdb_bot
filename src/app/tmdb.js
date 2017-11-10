@@ -80,7 +80,7 @@ module.exports = (function(mongo, config){
 		return new Promise((resolve, reject) => {
 			console.log('fetching', type, '...');
 			_connect('buffer').then((db)=>{
-				let cursor = db.collection(type).find({fetched: null}).sort({popularity: -1}).limit(20);
+				let cursor = db.collection(type).find({fetched: null}).sort({popularity: -1}).limit(40);
 				let mediaData = [];
 				cursor.each(function(err, media) {
 			      if (mediaData && media){
@@ -109,7 +109,7 @@ module.exports = (function(mongo, config){
 						forUpdate: [],
 						fetched: []
 					};		
-					resolve();
+					resolve(response);
 				}).catch((error) => {
 					throw error;
 				});
