@@ -3,11 +3,18 @@ const http = require("https");
 const isOnline = require('is-online');
 
 var target = process.argv[2];
+var order = process.argv[3];
 
 if(!target){
 	console.log('please provide a target.');
 	process.exit();
 }
+
+if(!order && isNaN(order)){
+	console.log('please provide a valid order.');
+	process.exit();
+}
+order = Number.parseInt(order);
 
 function getApiOptions(type, media){
 	
@@ -37,7 +44,7 @@ function getApiOptions(type, media){
 	return apiOptions;
 }
 
-(function app(target){
+(function app(target, order){
 	Promise.resolve()
 		.then(function() {
 		  console.log('starting bot...');
@@ -73,7 +80,7 @@ function getApiOptions(type, media){
 			  	});
 		  	}
 		  	console.log('filling buffer...');	  	
-		  	return tmdb.fillBuffer(target).then((data)=>{
+		  	return tmdb.fillBuffer(target, order).then((data)=>{
 		  		if(data.length<=0) return recursiveFunction(tmdb.buffer.data, attempt+1);
 		  		else return recursiveFunction(tmdb.buffer.data, 0);
 		  	});
@@ -130,6 +137,6 @@ function getApiOptions(type, media){
 		}).catch(()=>{
 			console.log('bot stopped with error');
 			console.log('retrying...');
-			app(target);
+			app(target, order);
 		});
-	})(target);
+	})(target, order);

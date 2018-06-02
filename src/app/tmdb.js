@@ -75,12 +75,13 @@ module.exports = (function(mongo, config){
 	 * [Get Movies]
 	 * @return {[Array]} [description]
 	 */
-	this.getMedia = (type) => {
+	this.getMedia = (type, order) => {
 
 		return new Promise((resolve, reject) => {
 			console.log('fetching', type, '...');
 			_connect('buffer').then((db)=>{
-				let cursor = db.collection(type).find({fetched: null}).sort({popularity: -1}).limit(40);
+				let filter = {popularity: order};
+				let cursor = db.collection(type).find({fetched: null}).sort(filter).limit(10);
 				let mediaData = [];
 				cursor.each(function(err, media) {
 			      if (mediaData && media){
@@ -100,9 +101,9 @@ module.exports = (function(mongo, config){
 	  * [Fill Buffer]
 	  * @return {[Promise]} [description]
 	  */
-	this.fillBuffer = (type) => {
+	this.fillBuffer = (type, order) => {
 		return new Promise((resolve, reject)=>{
-			this.getMedia(type).then((response) => {
+			this.getMedia(type, order).then((response) => {
 					this.buffer = {
 						type: type,
 						data: response,
